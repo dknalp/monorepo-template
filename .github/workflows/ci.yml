@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  go-build:
+    name: Go Build & Vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: true
+
+      - name: go vet all services
+        run: |
+          go vet ./services/api/...
+          go vet ./services/auth/...
+          go vet ./services/storage/...
+          go vet ./packages/go-api-lib/...
+
+      - name: build all services
+        run: |
+          go build ./services/api/cmd/api
+          go build ./services/auth/cmd/auth
+          go build ./services/storage/cmd/storage
+
+  go-test:
+    name: Go Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: true
+      - run: go test ./...
+
+  js-build:
+    name: JS Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm type-check
+      - run: pnpm lint
+
+  docker-build:
+    name: Docker Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build api image
+        run: docker build -f infra/dockerfiles/api.Dockerfile -t agency/api .
+      - name: Build auth image
+        run: docker build -f infra/dockerfiles/auth.Dockerfile -t agency/auth .
+      - name: Build storage image
+        run: docker build -f infra/dockerfiles/storage.Dockerfile -t agency/storage .
