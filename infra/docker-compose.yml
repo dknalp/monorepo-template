@@ -1,0 +1,75 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: infra/dockerfiles/api.Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_URL=postgres://postgres:postgres@db-api:5432/api?sslmode=disable
+    depends_on:
+      - db-api
+
+  auth:
+    build:
+      context: ..
+      dockerfile: infra/dockerfiles/auth.Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_URL=postgres://postgres:postgres@db-auth:5432/auth?sslmode=disable
+      - JWT_SECRET=changeme
+    depends_on:
+      - db-auth
+
+  storage:
+    build:
+      context: ..
+      dockerfile: infra/dockerfiles/storage.Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - DB_URL=postgres://postgres:postgres@db-storage:5432/storage?sslmode=disable
+    depends_on:
+      - db-storage
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/dockerfiles/web.Dockerfile
+    ports:
+      - "3000:3000"
+
+  db-api:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: api
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - db-api-data:/var/lib/postgresql/data
+
+  db-auth:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - db-auth-data:/var/lib/postgresql/data
+
+  db-storage:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: storage
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - db-storage-data:/var/lib/postgresql/data
+
+volumes:
+  db-api-data:
+  db-auth-data:
+  db-storage-data:

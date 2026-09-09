@@ -1,0 +1,8 @@
+go 1.22
+
+use (
+	./services/api
+	./services/auth
+	./services/storage
+	./packages/go-api-lib
+)
